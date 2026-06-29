@@ -4,33 +4,26 @@ variable "gcp_project_id" {
 }
 
 variable "gcp_region" {
-  description = "GCP region"
+  description = "GCP Region"
   type        = string
   default     = "us-central1"
 }
 
-variable "service_name" {
-  description = "Name of the Cloud Run service"
+variable "db_host" {
+  description = "Cloud SQL instance IP address"
   type        = string
-  default     = "du-etl"
 }
 
-variable "image_name" {
-  description = "Container image name (without tag)"
+variable "db_port" {
+  description = "Database port"
   type        = string
-  default     = "du-etl"
+  default     = "5432"
 }
 
-variable "image_tag" {
-  description = "Container image tag"
+variable "db_user" {
+  description = "Database user"
   type        = string
-  default     = "latest"
-}
-
-variable "db_instance_name" {
-  description = "Cloud SQL instance name"
-  type        = string
-  default     = "du-chapters-db"
+  default     = "postgres"
 }
 
 variable "db_name" {
@@ -39,34 +32,20 @@ variable "db_name" {
   default     = "du_chapters"
 }
 
-variable "db_user" {
-  description = "Database user"
-  type        = string
-  default     = "du_user"
-}
-
 variable "db_password" {
   description = "Database password"
   type        = string
   sensitive   = true
-  # This should be provided via terraform.tfvars or via -var flag
-  default     = ""
 }
 
-variable "schedule_expression" {
-  description = "Cloud Scheduler cron expression (daily at 2 AM UTC)"
+variable "du_api_base_url" {
+  description = "DU API base URL"
   type        = string
-  default     = "0 2 * * *"
+  default     = "https://services2.arcgis.com/5I7u4SJE1vUr79JC/arcgis/rest/services/UniversityChapters_Public/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json"
 }
 
 variable "state_filter" {
-  description = "State to filter chapters (e.g., CA)"
+  description = "State filter for chapters"
   type        = string
   default     = "CA"
-}
-
-variable "log_level" {
-  description = "Logging level (DEBUG, INFO, WARNING, ERROR)"
-  type        = string
-  default     = "INFO"
 }

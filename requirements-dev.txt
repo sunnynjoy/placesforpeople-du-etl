@@ -1,0 +1,21 @@
+# Development Dependencies (Optional)
+# ====================================
+# Install with: pip install -r requirements-dev.txt
+
+# Code Quality
+# ============
+black==23.12.1          # Code formatter (makes code consistent)
+flake8==6.1.0           # Code linter (finds style issues)
+mypy==1.7.1             # Static type checker (catches type errors)
+
+# Git Hooks (auto-check code before commit)
+pre-commit==3.6.0       # Framework for git hooks
+
+# Documentation
+# ==============
+sphinx==7.2.6           # Documentation generator (optional)
+
+gcloud==0.0.2
+
+# All base requirements (from requirements.txt)
+-r requirements.txt

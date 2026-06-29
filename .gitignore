@@ -47,13 +47,21 @@ htmlcov/
 .DS_Store
 
 # Terraform
-.terraform/
-.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+*.tfvars
+
 *.tfstate
 *.tfstate.*
-terraform.tfvars
-crash.log
-override.tf.json
+
+.terraform/
+.terraform.lock.hcl
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
@@ -62,3 +70,4 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+*.json
