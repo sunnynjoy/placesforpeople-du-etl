@@ -1,62 +1,51 @@
-name: Build, Deploy to Cloud Run, and Trigger Daily
+name: Build and Deploy to Cloud Run
 
 on:
   push:
     branches:
       - main
-  schedule:
-    # Daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 env:
   PROJECT_ID: placesforpeople-500907
   REGION: us-central1
-  SERVICE_NAME: placesforpeople-etl
+  JOB_NAME: placesforpeople-etl
   REGISTRY: us-central1-docker.pkg.dev
 
 jobs:
   build-and-deploy:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-          docker tag ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-                     ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:latest
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }}
 
-      - name: Push to Artifact Registry
+      - name: Build and Push Docker image (AMD64)
         run: |
-          gcloud auth configure-docker ${{ env.REGISTRY }}
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:latest
+          docker buildx build --platform linux/amd64 \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.JOB_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.JOB_NAME }}:latest \
+            --push .
 
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run Job
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
+          gcloud run jobs deploy ${{ env.JOB_NAME }} \
             --region ${{ env.REGION }} \
-            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.SERVICE_NAME }}:latest \
-            --platform managed \
-            --allow-unauthenticated
-
-  trigger-etl:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Trigger Cloud Run ETL
-        run: |
-          curl -X POST https://${{ env.REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/projects/${{ env.PROJECT_ID }}/locations/${{ env.REGION }}/services/${{ env.SERVICE_NAME }}:run
-        env:
-          REGION: us-central1
+            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/placesforpeople-etl/${{ env.JOB_NAME }}:latest \
+            --project ${{ env.PROJECT_ID }}
